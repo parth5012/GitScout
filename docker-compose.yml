@@ -17,27 +17,27 @@ services:
       timeout: 5s
       retries: 5
 
-  # ──────────────────────────────────────────
-  # App – interactive CLI / Textual TUI
-  # ──────────────────────────────────────────
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: GitScout_app
-    restart: unless-stopped
-    stdin_open: true   # keeps STDIN open so the CLI can accept input
-    tty: true          # allocates a pseudo-TTY for Textual / colorama
-    env_file:
-      - .env
-    environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-    volumes:
-      - ./codebases:/usr/src/app/codebases   # persist fetched repo snapshots
-    depends_on:
-      redis:
-        condition: service_healthy
+  # # ──────────────────────────────────────────
+  # # App – interactive CLI / Textual TUI
+  # # ──────────────────────────────────────────
+  # app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: GitScout_app
+  #   restart: unless-stopped
+  #   stdin_open: true   # keeps STDIN open so the CLI can accept input
+  #   tty: true          # allocates a pseudo-TTY for Textual / colorama
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     - CELERY_BROKER_URL=redis://redis:6379/0
+  #     - CELERY_RESULT_BACKEND=redis://redis:6379/0
+  #   volumes:
+  #     - ./codebases:/usr/src/app/codebases   # persist fetched repo snapshots
+  #   depends_on:
+  #     redis:
+  #       condition: service_healthy
 
   # ──────────────────────────────────────────
   # Celery beat for task execution after certain time interval.
