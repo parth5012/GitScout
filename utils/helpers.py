@@ -7,7 +7,6 @@ import os
 from dotenv import load_dotenv
 from github import Github
 from github.Auth import Token
-from github.Repository import Repository
 
 
 load_dotenv()
@@ -21,14 +20,25 @@ def store_embeddings():
     pass
 
 
-def get_llm() -> LLM:
-    llm_choice = os.getenv("LLM_PROVIDER")
+llm_choice = os.getenv("LLM_PROVIDER")
+
+
+def get_chat_llm() -> LLM:
     if llm_choice == "google":
         api_key = os.getenv("GOOGLE_API_KEY")
         return ChatGoogleGenerativeAI(model="gemini-2.5-flash", api_key=api_key)
     else:
         api_key = os.getenv("GROQ_API_KEY")
         return ChatGroq(model="qwen/qwen3-32b")
+
+
+def get_secondary_llm() -> LLM:
+    if llm_choice == "google":
+        api_key = os.getenv("GROQ_API_KEY")
+        return ChatGroq(model="qwen/qwen3-32b")
+    else:
+        api_key = os.getenv("GOOGLE_API_KEY")
+        return ChatGoogleGenerativeAI(model="gemini-2.5-flash", api_key=api_key)
 
 
 def get_github_client() -> Github:
@@ -68,13 +78,11 @@ def get_repo_identifier(url: str) -> str:
     return f"{username}/{repo_name}"
 
 
-
 @contextmanager
 def get_repo_from_url(url: str):
     g = get_github_client()
     try:
         repo_identifier = get_repo_identifier(url)
-        yield g.get_repo(repo_identifier)   # repo is alive inside the `with` block
+        yield g.get_repo(repo_identifier)  # repo is alive inside the `with` block
     finally:
-        g.close()                           # always closes, even on exception
-
+        g.close()  # always closes, even on exception

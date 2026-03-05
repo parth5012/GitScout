@@ -3,7 +3,7 @@ from langgraph.prebuilt import ToolNode
 from langchain_core.messages import SystemMessage
 from utils.models import IssueScore
 from utils.tools import tools
-from utils.helpers import get_llm
+from utils.helpers import get_chat_llm,get_secondary_llm
 from utils.states import CoreState
 from utils.prompts import SYSTEM_PROMPT
 from utils.parsers import parser1
@@ -13,9 +13,8 @@ from utils.notifier import send_content_to_discord
 import json
 
 
-
 def chat_node(state: CoreState):
-    llm = get_llm()
+    llm = get_chat_llm()
     messages = state["messages"]
     prompted_messages = [SystemMessage(content=SYSTEM_PROMPT)] + messages
     llm = llm.bind_tools(tools)
@@ -45,14 +44,15 @@ def get_likelihood_score(state: CoreState) -> List[IssueScore]:
         print(f"Skipping scoring due to earlier error: {state['error']}")
         return {"scored_issues": []}
     skill_set = state["user_stack"]
-    metadata = state['issues']
-    llm = get_llm()
+    metadata = state["issues"]
+    llm = get_secondary_llm()
     chain = likelihood_score_prompt | llm | parser1
     response = chain.invoke({"skill_set": skill_set, "metadata": metadata})
     if response.scores:
         return {"scored_issues": list(response.scores)}
 
     return {"scored_issues": []}
+
 
 def fetch_issues(state: CoreState) -> Dict:
     """
@@ -67,9 +67,9 @@ def fetch_issues(state: CoreState) -> Dict:
     Returns:
         A dictionary containing a list of processed issue objects and total count.
     """
-    client = None   
+    client = None
     try:
-        query = state['query']
+        query = state["query"]
         client = get_github_client()
         issues = client.search_issues(query=query, sort="created", order="desc")
         print(f"Found {issues.totalCount} matching issues!")
@@ -80,11 +80,11 @@ def fetch_issues(state: CoreState) -> Dict:
     finally:
         if client:
             client.close()
-    
 
-def generate_github_query(state:CoreState) -> str:
-    user_goal =  state['user_goal']
-    user_stack  =  state['user_stack']
+
+def generate_github_query(state: CoreState) -> str:
+    user_goal = state["user_goal"]
+    user_stack = state["user_stack"]
     """
     Transforms a user's high-level goal and technical stack into a structured GitHub search query string.
     It is a mandatory step before calling the fetch_issues tool.
@@ -110,9 +110,10 @@ def generate_github_query(state:CoreState) -> str:
     4. If they want beginner issues, use label:"good first issue" OR label:"help wanted".
     5. Return ONLY the raw query string. No markdown, no explanations.
     """
-    llm = get_llm()
+    llm = get_secondary_llm()
     response = llm.invoke(prompt)
     return {"query": response.content}
+
 
 def send_issues_to_discord(state: CoreState):
     if state.get("error"):

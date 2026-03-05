@@ -8,7 +8,12 @@ from zipfile import ZipFile
 from typing import List, Dict
 from utils.models import IssueScore
 from utils.parsers import parser1
-from utils.helpers import get_github_client, get_llm, get_repo_from_url, process_issues
+from utils.helpers import (
+    get_github_client,
+    get_repo_from_url,
+    process_issues,
+    get_secondary_llm
+)
 from utils.prompts import likelihood_score_prompt
 
 
@@ -64,7 +69,7 @@ def generate_github_query(user_goal: str, user_stack: str) -> str:
     4. If they want beginner issues, use label:"good first issue" OR label:"help wanted".
     5. Return ONLY the raw query string. No markdown, no explanations.
     """
-    llm = get_llm()
+    llm = get_secondary_llm()
     response = llm.invoke(prompt)
     return response.content
 
@@ -85,7 +90,7 @@ def get_likelihood_score(skill_set: str, metadata: List[Dict]) -> List[IssueScor
     Returns:
         An integer from 0 to 10, where 10 indicates a perfect match.
     """
-    llm = get_llm()
+    llm = get_secondary_llm()
     chain = likelihood_score_prompt | llm | parser1
     response = chain.invoke({"skill_set": skill_set, "metadata": metadata})
     if response.scores:
@@ -104,7 +109,7 @@ def fetch_codebase(url: str):
         with get_repo_from_url(url) as repo:
             archive_url = repo.get_archive_link("zipball")  # client is still open ✅
         response = requests.get(archive_url)  # no client needed here, just HTTP
-        path = f'{os.path.dirname(os.path.abspath(__file__))}/codebases'
+        path = f"{os.path.dirname(os.path.abspath(__file__))}/codebases"
         with ZipFile(io.BytesIO(response.content)) as z:
             z.extractall(path)
         return f"Success, CodeBase is now accessible at {path}"
@@ -156,12 +161,13 @@ def map_universal_architecture(repo_path: str) -> dict:
 
     return architecture
 
+
 @tool
 def read_file_content(repo_path: str, file_path: str) -> str:
     """
     Reads the full content of a specific file from a locally extracted repo.
     Use after map_universal_architecture to drill into a specific file.
-    
+
     Args:
         repo_path: Path to the extracted repo root (e.g. './codebases/myrepo')
         file_path: Relative path to the file (e.g. 'src/auth/login.py')
@@ -171,5 +177,11 @@ def read_file_content(repo_path: str, file_path: str) -> str:
         return f.read()
 
 
-
-tools = [fetch_issues, generate_github_query, get_likelihood_score, fetch_codebase,map_universal_architecture,read_file_content]
+tools = [
+    fetch_issues,
+    generate_github_query,
+    get_likelihood_score,
+    fetch_codebase,
+    map_universal_architecture,
+    read_file_content,
+]
