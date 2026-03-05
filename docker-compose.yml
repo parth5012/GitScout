@@ -55,7 +55,7 @@ services:
       - PYTHONPATH=/app
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - DISCORD_WEBHOOK=https://discord.com/api/webhooks/1464226235780563097/Zi8TEX8s1htn2Qc-YfgfP_OJRm5UTEc44i98YYKucrhV78YpCKJIF9M92e0i_3rVI6C2
+      - DISCORD_WEBHOOK=
     volumes:
       - ./codebases:/usr/src/app/codebases
     depends_on:
