@@ -1,5 +1,3 @@
-import json
-from utils.notifier import send_content_to_discord
 from utils.graphs import build_beat_graph
 from utils.states import CoreState
 from celery import Celery
@@ -24,14 +22,7 @@ def send_issues_to_discord():
             "user_stack": "Python,django,Celery,Langchain,Langgraph,Sklearn",
         }
     )
-    if output.get("error"):
-        send_content_to_discord(f"⚠️ Pipeline failed: {output['error']}")
-    else:
-        formatted = json.dumps(
-            [s.model_dump() for s in output["scored_issues"]], indent=2, default=str
-        )
-        send_content_to_discord(formatted)
-
+    print(output)
 
 app.conf.beat_schedule = {
     "find_issues": {

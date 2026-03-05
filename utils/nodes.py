@@ -9,6 +9,8 @@ from utils.prompts import SYSTEM_PROMPT
 from utils.parsers import parser1
 from utils.helpers import get_github_client, process_issues
 from utils.prompts import likelihood_score_prompt
+from utils.notifier import send_content_to_discord
+import json
 
 
 
@@ -111,3 +113,12 @@ def generate_github_query(state:CoreState) -> str:
     llm = get_llm()
     response = llm.invoke(prompt)
     return {"query": response.content}
+
+def send_issues_to_discord(state: CoreState):
+    if state.get("error"):
+        send_content_to_discord(f"⚠️ Pipeline failed: {state['error']}")
+    else:
+        formatted = json.dumps(
+            [s.model_dump() for s in state["scored_issues"]], indent=2, default=str
+        )
+        send_content_to_discord(formatted)
