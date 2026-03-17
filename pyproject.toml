@@ -17,6 +17,7 @@ dependencies = [
     "pygithub>=2.8.1",
     "python-dotenv>=1.2.1",
     "redis>=7.1.0",
+    "slack-bolt>=1.27.0",
     "textual>=7.5.0",
     "tree-sitter>=0.25.2",
     "tree-sitter-languages>=1.10.2",
